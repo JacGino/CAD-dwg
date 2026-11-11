@@ -684,11 +684,12 @@ async function dwgEngine(){if(DWGLIB)return DWGLIB;const cand=['./libredwg-web.j
   let lib;try{lib=await LD.create()}catch(e1){lib=await LD.create(u.replace(/[^\/]*$/,''))}
   DWGLIB={lib,FT};return DWGLIB}catch(e){errs.push(u.replace(/^https?:\/\/[^\/]+\//,'')+': '+(e&&e.message||e))}}
  throw new Error(errs.join(' | '))}
+const AR=v=>Array.isArray(v)?v:(v instanceof Map?[...v.values()]:(v&&typeof v=='object'?(typeof v.length=='number'&&typeof v.get=='function'?Array.from({length:v.length},(_,i)=>v.get(i)):Object.values(v)):[]));
 function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixed(6):String(v))},st={skip:0,n:0,img:0,im:[]};
  const P=v=>v?{x:+v.x||0,y:+v.y||0}:{x:0,y:0},DEG=180/Math.PI,rad=v=>Math.abs(v)>6.3?v/DEG:v,deg=v=>Math.abs(v)>6.3?v:v*DEG;
- const blocks=(()=>{const m=new Map(),add=(k,b)=>{if(k&&b&&Array.isArray(b.entities))m.set(String(k).toLowerCase(),b.entities)};
-  const B=db&&db.blocks;if(Array.isArray(B))B.forEach(b=>add(b.name,b));else if(B&&typeof B=='object')for(const k in B)add(B[k].name||k,B[k]);
-  const T=db&&db.tables&&db.tables.BLOCK_RECORD,L=T&&(T.entries||T);if(Array.isArray(L))L.forEach(b=>add(b.name,b));return m})();
+ const blocks=(()=>{const m=new Map(),add=(k,b)=>{if(k&&b&&b.entities)m.set(String(k).toLowerCase(),AR(b.entities))};
+  const B=db&&db.blocks;if(B instanceof Map)B.forEach((b,k)=>add(b&&b.name||k,b));else if(Array.isArray(B))B.forEach(b=>add(b&&b.name,b));else if(B&&typeof B=='object')for(const k in B)add(B[k]&&B[k].name||k,B[k]);
+  const T=db&&db.tables&&db.tables.BLOCK_RECORD,L=AR(T&&(T.entries||T));L.forEach(b=>add(b&&b.name,b));return m})();
  const col=e=>{const c=e.colorIndex!=null?e.colorIndex:e.color;if(Number.isFinite(c)&&c>0&&c<256)g(62,c)};
  const X=(p,T)=>T?{x:T.dx+p.x*T.sx*T.c-p.y*T.sy*T.s,y:T.dy+p.x*T.sx*T.s+p.y*T.sy*T.c}:p;
  const line=(a,b,e)=>{g(0,'LINE');col(e);g(10,a.x);g(20,a.y);g(11,b.x);g(21,b.y);st.n++};
@@ -697,7 +698,7 @@ function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixe
   if(ty=='LINE')line(X(P(e.startPoint),T),X(P(e.endPoint),T),e);
   else if(ty=='CIRCLE'){const c=X(P(e.center),T);g(0,'CIRCLE');col(e);g(10,c.x);g(20,c.y);g(40,(+e.radius||0)*sc);st.n++}
   else if(ty=='ARC'){let a1=+e.startAngle||0,a2=+e.endAngle||0;const big=Math.abs(a1)>6.3||Math.abs(a2)>6.3;if(!big){a1*=DEG;a2*=DEG}arc(X(P(e.center),T),(+e.radius||0)*sc,a1+rot,a2+rot,e)}
-  else if(ty=='LWPOLYLINE'||ty=='POLYLINE'||ty=='POLYLINE2D'||ty=='POLYLINE3D'){const V=(e.vertices||[]).map(v=>Object.assign(P(v),{b:+v.bulge||0})),cl=!!((+e.flag||0)&1||e.closed||e.shape===true),n=V.length;
+  else if(ty=='LWPOLYLINE'||ty=='POLYLINE'||ty=='POLYLINE2D'||ty=='POLYLINE3D'){const V=AR(e.vertices).map(v=>Object.assign(P(v),{b:+v.bulge||0})),cl=!!((+e.flag||0)&1||e.closed||e.shape===true),n=V.length;
    for(let i=0;i<(cl?n:n-1);i++){const A=V[i],B=V[(i+1)%n];if(!A.b){line(X(A,T),X(B,T),e);continue}
     const dx=B.x-A.x,dy=B.y-A.y,dd=Math.hypot(dx,dy);if(dd<1e-12)continue;const k=(dd/2)*(1-A.b*A.b)/(2*A.b),cx=(A.x+B.x)/2-dy/dd*k,cy=(A.y+B.y)/2+dx/dd*k,r=Math.hypot(A.x-cx,A.y-cy),t1=Math.atan2(A.y-cy,A.x-cx)*DEG,t2=Math.atan2(B.y-cy,B.x-cx)*DEG,c=X({x:cx,y:cy},T);
     if(A.b>0)arc(c,r*sc,t1+rot,t2+rot,e);else arc(c,r*sc,t2+rot,t1+rot,e)}}
@@ -713,8 +714,8 @@ function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixe
   else if(ty=='IMAGE'){const ps=P(e.position||e.insertionPoint),u=P(e.uPixel||e.uVector||{x:1,y:0}),v=P(e.vPixel||e.vVector||{x:0,y:1}),sz=e.imageSize||e.size||{x:1,y:1},q=X(ps,T),h=e.imageDefHandle!=null?e.imageDefHandle:(e.imageDef&&e.imageDef.handle!=null?e.imageDef.handle:e.imageDefId);
    g(0,'IMAGE');g(10,q.x);g(20,q.y);g(11,u.x*(T?T.sx:1));g(21,u.y*(T?T.sx:1));g(12,v.x);g(22,v.y);g(13,+sz.x||1);g(23,+sz.y||1);g(340,h==null?'':String(h));st.img++;st.im.push(h==null?'':String(h))}
   else if(ty&&ty!='VERTEX'&&ty!='SEQEND'&&ty!='ATTRIB'&&ty!='POINT'&&ty!='VIEWPORT')st.skip++};
- for(const e of(db&&db.entities)||[])ent(e,null,0);
- const defs=((db&&db.objects)||[]).filter(x=>x&&String(x.type||x.name||'').toUpperCase()=='IMAGEDEF'),ob=defs.map((x,i)=>'0\nIMAGEDEF\n5\n'+(x.handle!=null?String(x.handle):'H'+i)+'\n1\n'+String(x.fileName||x.path||x.filePath||x.name||'')+'\n').join('');
+ for(const e of AR(db&&db.entities))ent(e,null,0);
+ const defs=AR(db&&db.objects).filter(x=>x&&String(x.type||x.name||'').toUpperCase()=='IMAGEDEF'),ob=defs.map((x,i)=>'0\nIMAGEDEF\n5\n'+(x.handle!=null?String(x.handle):'H'+i)+'\n1\n'+String(x.fileName||x.path||x.filePath||x.name||'')+'\n').join('');
  if(!defs.length)st.im=[];
  return{txt:(ob?'0\nSECTION\n2\nOBJECTS\n'+ob+'0\nENDSEC\n':'')+'0\nSECTION\n2\nENTITIES\n'+(()=>{let s='';for(let i=0;i<o.length;i+=2)s+=o[i]+'\n'+o[i+1]+'\n';return s})()+'0\nENDSEC\n0\nEOF\n',n:st.n,skip:st.skip,img:st.img}}
 async function openDwg(f){flash('Opening DWG… the first time needs internet to load the DWG reader');
