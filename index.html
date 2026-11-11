@@ -698,7 +698,8 @@ function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixe
   if(ty=='LINE')line(X(P(e.startPoint),T),X(P(e.endPoint),T),e);
   else if(ty=='CIRCLE'){const c=X(P(e.center),T);g(0,'CIRCLE');col(e);g(10,c.x);g(20,c.y);g(40,(+e.radius||0)*sc);st.n++}
   else if(ty=='ARC'){let a1=+e.startAngle||0,a2=+e.endAngle||0;const big=Math.abs(a1)>6.3||Math.abs(a2)>6.3;if(!big){a1*=DEG;a2*=DEG}arc(X(P(e.center),T),(+e.radius||0)*sc,a1+rot,a2+rot,e)}
-  else if(ty=='LWPOLYLINE'||ty=='POLYLINE'||ty=='POLYLINE2D'||ty=='POLYLINE3D'){const V=AR(e.vertices).map(v=>Object.assign(P(v),{b:+v.bulge||0})),cl=!!((+e.flag||0)&1||e.closed||e.shape===true),n=V.length;
+  else if(ty=='LWPOLYLINE'||ty=='POLYLINE'||ty=='POLYLINE2D'||ty=='POLYLINE3D'){const V=AR(e.vertices).map(v=>Object.assign(P(v),{b:+v.bulge||0})),fl=(+e.flag||0),fl2=(+e.flags||0),ck=Object.keys(e).some(k=>/clos|shape/i.test(k)&&e[k]===true),cl=!!((fl&1)||(fl&512)||(fl2&1)||(fl2&512)||e.closed||e.isClosed||e.shape===true||ck),n=V.length;st.polyN=(st.polyN||0)+1;if(cl)st.polyC=(st.polyC||0)+1;if(!st.dgP&&ty=='LWPOLYLINE')try{st.dgP=JSON.stringify(e,(k,v)=>k=='vertices'?(Array.isArray(v)?v.length+' vertices':'?'):(typeof v=='string'&&v.length>20?v.slice(0,20):v)).replace(/,/g,', ').slice(0,420)}catch(x){}
+   
    for(let i=0;i<(cl?n:n-1);i++){const A=V[i],B=V[(i+1)%n];if(!A.b){line(X(A,T),X(B,T),e);continue}
     const dx=B.x-A.x,dy=B.y-A.y,dd=Math.hypot(dx,dy);if(dd<1e-12)continue;const k=(dd/2)*(1-A.b*A.b)/(2*A.b),cx=(A.x+B.x)/2-dy/dd*k,cy=(A.y+B.y)/2+dx/dd*k,r=Math.hypot(A.x-cx,A.y-cy),t1=Math.atan2(A.y-cy,A.x-cx)*DEG,t2=Math.atan2(B.y-cy,B.x-cx)*DEG,c=X({x:cx,y:cy},T);
     if(A.b>0)arc(c,r*sc,t1+rot,t2+rot,e);else arc(c,r*sc,t2+rot,t1+rot,e)}}
@@ -721,7 +722,7 @@ function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixe
  {const h={};OB.forEach(([k,x])=>{const t=tyOf(x,k)||typeof x;h[t]=(h[t]||0)+1});st.dgO='db keys: '+Object.keys(db||{}).join(', ')+' | '+OB.length+' objects: '+Object.entries(h).sort((a,b)=>b[1]-a[1]).slice(0,5).map(a=>a.join('×')).join(', ')+(defs[0]?'; def keys: '+Object.keys(defs[0][1]).join(', '):'');{const o1=(defs[0]||OB[0]||[])[1];if(o1&&typeof o1=='object')st.dgO+=' | sample: '+JSON.stringify(o1,(kk,vv)=>typeof vv=='string'&&vv.length>40?vv.slice(0,40)+'…':(Array.isArray(vv)&&vv.length>3?vv.slice(0,3):vv)).slice(0,400)}
   }
  if(!defs.length)st.im=[];
- return{dgI:st.dgI,dgO:st.dgO,txt:(ob?'0\nSECTION\n2\nOBJECTS\n'+ob+'0\nENDSEC\n':'')+'0\nSECTION\n2\nENTITIES\n'+(()=>{let s='';for(let i=0;i<o.length;i+=2)s+=o[i]+'\n'+o[i+1]+'\n';return s})()+'0\nENDSEC\n0\nEOF\n',n:st.n,skip:st.skip,img:st.img}}
+ return{dgP:(st.polyN&&!st.polyC)?st.dgP:'',dgI:st.dgI,dgO:st.dgO,txt:(ob?'0\nSECTION\n2\nOBJECTS\n'+ob+'0\nENDSEC\n':'')+'0\nSECTION\n2\nENTITIES\n'+(()=>{let s='';for(let i=0;i<o.length;i+=2)s+=o[i]+'\n'+o[i+1]+'\n';return s})()+'0\nENDSEC\n0\nEOF\n',n:st.n,skip:st.skip,img:st.img}}
 async function openDwg(f){flash('Opening DWG… the first time needs internet to load the DWG reader');
  let E;try{E=await dwgEngine()}catch(e){flash('The DWG reader could not be loaded ('+String(e.message||e).slice(0,160)+'). Open the file once while online, or convert it to DXF');return}
  try{const buf=await f.arrayBuffer();let dwg=E.lib.dwg_read_data(buf,E.FT?E.FT.DWG:0);if(!dwg)throw new Error('could not read this DWG');const db=E.lib.convert(dwg);try{E.lib.dwg_free(dwg)}catch(e){}
@@ -729,6 +730,7 @@ async function openDwg(f){flash('Opening DWG… the first time needs internet to
   const o=dxfShapes(q.txt);sheetNew((f.name||'Drawing').replace(/\.[^.]+$/,'').slice(0,24),o.out);fit();
   const c=SH[SC],unn=o.imgs.filter(m=>!m.name).length;c.refs=o.imgs.filter(m=>m.name).map(m=>({x:m.x,y:m.y,w:m.w,name:m.name}));const np=refsToPics(c);save();draw();let msg='Opened DWG in a new tab: '+o.out.length+' shapes'+(q.skip?'. Skipped '+q.skip+' unsupported items':'');
   if(np){const miss=await picMiss(shapes);draw();msg+='. Pictures: '+(np-miss.length)+' placed'+(miss.length?', '+miss.length+' missing ('+[...new Set(miss)].slice(0,3).join(', ')+')':'')}if(unn)msg+='. '+unn+' picture(s) have no readable file name and were not placed. [info] IMAGE fields: '+(q.dgI||'-')+' | '+(q.dgO||'no objects');
+  if(q.dgP)msg+='. [info] polyline: '+q.dgP;
   flash(msg)}
  catch(e){flash('Could not read this DWG: '+String(e&&e.message||e).slice(0,160))}}
 $('#imp').onclick=()=>{$('#dfile').accept='';$('#dfile').click()};
