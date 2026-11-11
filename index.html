@@ -739,7 +739,7 @@ async function ulResolve(c){const miss=[];c.ul=[];for(const m of c.refs||[]){con
 async function unzip(buf){const dv=new DataView(buf),u8=new Uint8Array(buf);let e=u8.length-22;while(e>=0&&dv.getUint32(e,true)!==0x06054b50)e--;if(e<0)throw 0;const n=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const out=[];
  for(let i=0;i<n;i++){if(dv.getUint32(p,true)!==0x02014b50)break;const meth=dv.getUint16(p+10,true),csz=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),xl=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),lo=dv.getUint32(p+42,true),name=new TextDecoder().decode(u8.subarray(p+46,p+46+nl));p+=46+nl+xl+cl;
   if(name.endsWith('/')||/(^|\/)(__MACOSX|\.)/.test(name))continue;const ln=dv.getUint16(lo+26,true),lx=dv.getUint16(lo+28,true),st=lo+30+ln+lx,data=u8.subarray(st,st+csz);let bytes;
-  if(meth==0)bytes=data;else if(meth==8)bytes=new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());else continue;
+  if(meth==0)bytes=data;else if(meth==8)bytes=new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());else{(out.bad||(out.bad=[])).push(name.split('/').pop()+' (compression '+meth+')');continue}
   out.push({name:name.split('/').pop(),bytes})}return out}
 async function openDoc(f){if(/\.dwg$/i.test(f.name||'')){await openDwg(f);return}const t=await f.text();
  if(/^\s*\{/.test(t)){try{const j=JSON.parse(t);if(!Array.isArray(j.shapes))throw 0;sheetNew((f.name||'Drawing').replace(/\.[^.]+$/,'').replace(/\.draft$/,'').slice(0,24),j.shapes,j.V);fit();save();flash('Opened in a new tab: '+shapes.length+' shapes')}catch(e){flash('This file is not a saved drawing from this app')}return}
@@ -750,11 +750,13 @@ async function openDoc(f){if(/\.dwg$/i.test(f.name||'')){await openDwg(f);return
  let msg='Opened in a new tab: '+o.out.length+' shapes'+(o.skip?'. Skipped '+o.skip+' unsupported items':'');
  if(np){const miss=await picMiss(shapes);draw();msg+='. Pictures: '+(np-miss.length)+' placed'+(miss.length?', '+miss.length+' missing ('+[...new Set(miss)].slice(0,3).join(', ')+(miss.length>3?'…':'')+'). Use Add pictures… or open a zip of the folder':'')}
  flash(msg)}
-$('#dfile').onchange=async e=>{const fs=[...e.target.files];e.target.value='';if(!fs.length)return;const docs=[],pics=[];
- for(const f of fs){if(/\.zip$/i.test(f.name)){try{for(const z of await unzip(await f.arrayBuffer())){const q=new File([z.bytes],z.name);if(IMX.test(z.name))pics.push(q);else if(/\.(dxf|dwg|json|draft)$/i.test(z.name))docs.push(q)}}catch(x){flash('Could not read this zip file')}}else if(IMX.test(f.name))pics.push(f);else docs.push(f)}
+$('#dfile').onchange=e=>{const fs=[...e.target.files];e.target.value='';if(!fs.length)return;importFiles(fs).catch(x=>flash('Import failed: '+String(x&&x.message||x).slice(0,160)))};
+async function importFiles(fs){const docs=[],pics=[],seen=[];flash('Reading '+fs.map(f=>f.name).join(', ').slice(0,60)+'…');
+ for(const f of fs){if(/\.zip$/i.test(f.name)){try{const zl=await unzip(await f.arrayBuffer());if(zl.bad)seen.push(...zl.bad.map(n=>'unreadable: '+n));for(const z of zl){seen.push(z.name);const q=new File([z.bytes],z.name);if(IMX.test(z.name))pics.push(q);else if(/\.(dxf|dwg|json|draft)$/i.test(z.name))docs.push(q)}}catch(x){flash('Could not read this zip file')}}else if(IMX.test(f.name))pics.push(f);else docs.push(f)}
+ if(!docs.length&&!pics.length){flash('Nothing to open in '+fs.map(f=>f.name).join(', ').slice(0,50)+'. Found: '+(seen.length?seen.slice(0,6).join(', ')+(seen.length>6?'…':''):'no files')+'. Supported: DXF, DWG, pictures, saved drawings');return}
  if(pics.length){flash('Saving '+pics.length+' picture'+(pics.length>1?'s':'')+'…');await libAdd(pics);PICEL.clear();draw()}
  if(!docs.length){const c=SH[SC];if(shapes.some(q=>q.t=='pic')){const miss=await picMiss(shapes);draw();flash('Pictures saved. '+(shapes.filter(q=>q.t=='pic').length-miss.length)+' placed'+(miss.length?', '+miss.length+' still missing':''))}else flash(pics.length?'Pictures saved in the app. They are placed automatically when you open a DXF that uses them':'Nothing to open');return}
- for(const f of docs)await openDoc(f);if(pics.length&&docs.length)flash('Opened '+docs.length+' drawing'+(docs.length>1?'s':'')+' with '+pics.length+' picture'+(pics.length>1?'s':'')+' saved in the app')};
+ for(const f of docs)await openDoc(f)}
 setTimeout(()=>{let n=0;SH.forEach(c=>{n+=refsToPics(c)});if(n){save();draw()}},0);
 const crcT=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
 const crc32=b=>{let c=-1;for(const v of b)c=crcT[(c^v)&255]^(c>>>8);return(c^-1)>>>0};
