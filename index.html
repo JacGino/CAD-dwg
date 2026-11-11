@@ -684,7 +684,7 @@ async function dwgEngine(){if(DWGLIB)return DWGLIB;const cand=['./libredwg-web.j
   let lib;try{lib=await LD.create()}catch(e1){lib=await LD.create(u.replace(/[^\/]*$/,''))}
   DWGLIB={lib,FT};return DWGLIB}catch(e){errs.push(u.replace(/^https?:\/\/[^\/]+\//,'')+': '+(e&&e.message||e))}}
  throw new Error(errs.join(' | '))}
-function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixed(6):String(v))},st={skip:0,n:0,img:0};
+function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixed(6):String(v))},st={skip:0,n:0,img:0,im:[]};
  const P=v=>v?{x:+v.x||0,y:+v.y||0}:{x:0,y:0},DEG=180/Math.PI,rad=v=>Math.abs(v)>6.3?v/DEG:v,deg=v=>Math.abs(v)>6.3?v:v*DEG;
  const blocks=(()=>{const m=new Map(),add=(k,b)=>{if(k&&b&&Array.isArray(b.entities))m.set(String(k).toLowerCase(),b.entities)};
   const B=db&&db.blocks;if(Array.isArray(B))B.forEach(b=>add(b.name,b));else if(B&&typeof B=='object')for(const k in B)add(B[k].name||k,B[k]);
@@ -710,16 +710,21 @@ function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixe
     T2={dx:ip.x,dy:ip.y,sx:(e.xScale==null?1:+e.xScale)*(T?T.sx:1),sy:(e.yScale==null?1:+e.yScale)*(T?T.sy:1),r,c:Math.cos(r),s:Math.sin(r),rd:r*DEG};
     // nested transform: compose by transforming the insertion point through T (done above) and accumulating rotation/scale
     for(const x of b)ent(x,T2,d+1)}
-  else if(ty=='IMAGE')st.img++;
+  else if(ty=='IMAGE'){const ps=P(e.position||e.insertionPoint),u=P(e.uPixel||e.uVector||{x:1,y:0}),v=P(e.vPixel||e.vVector||{x:0,y:1}),sz=e.imageSize||e.size||{x:1,y:1},q=X(ps,T),h=e.imageDefHandle!=null?e.imageDefHandle:(e.imageDef&&e.imageDef.handle!=null?e.imageDef.handle:e.imageDefId);
+   g(0,'IMAGE');g(10,q.x);g(20,q.y);g(11,u.x*(T?T.sx:1));g(21,u.y*(T?T.sx:1));g(12,v.x);g(22,v.y);g(13,+sz.x||1);g(23,+sz.y||1);g(340,h==null?'':String(h));st.img++;st.im.push(h==null?'':String(h))}
   else if(ty&&ty!='VERTEX'&&ty!='SEQEND'&&ty!='ATTRIB'&&ty!='POINT'&&ty!='VIEWPORT')st.skip++};
  for(const e of(db&&db.entities)||[])ent(e,null,0);
- return{txt:'0\nSECTION\n2\nENTITIES\n'+(()=>{let s='';for(let i=0;i<o.length;i+=2)s+=o[i]+'\n'+o[i+1]+'\n';return s})()+'0\nENDSEC\n0\nEOF\n',n:st.n,skip:st.skip,img:st.img}}
+ const defs=((db&&db.objects)||[]).filter(x=>x&&String(x.type||x.name||'').toUpperCase()=='IMAGEDEF'),ob=defs.map((x,i)=>'0\nIMAGEDEF\n5\n'+(x.handle!=null?String(x.handle):'H'+i)+'\n1\n'+String(x.fileName||x.path||x.filePath||x.name||'')+'\n').join('');
+ if(!defs.length)st.im=[];
+ return{txt:(ob?'0\nSECTION\n2\nOBJECTS\n'+ob+'0\nENDSEC\n':'')+'0\nSECTION\n2\nENTITIES\n'+(()=>{let s='';for(let i=0;i<o.length;i+=2)s+=o[i]+'\n'+o[i+1]+'\n';return s})()+'0\nENDSEC\n0\nEOF\n',n:st.n,skip:st.skip,img:st.img}}
 async function openDwg(f){flash('Opening DWG… the first time needs internet to load the DWG reader');
  let E;try{E=await dwgEngine()}catch(e){flash('The DWG reader could not be loaded ('+String(e.message||e).slice(0,160)+'). Open the file once while online, or convert it to DXF');return}
  try{const buf=await f.arrayBuffer();let dwg=E.lib.dwg_read_data(buf,E.FT?E.FT.DWG:0);if(!dwg)throw new Error('could not read this DWG');const db=E.lib.convert(dwg);try{E.lib.dwg_free(dwg)}catch(e){}
-  const q=dwgToDxf(db);if(!q.n){flash('No supported shapes found in this DWG'+(q.skip?' ('+q.skip+' unsupported items)':''));return}
-  const o=dxfShapes(q.txt);sheetNew((f.name||'Drawing').replace(/\.[^.]+$/,'').slice(0,24),o.out);fit();save();draw();
-  flash('Opened DWG in a new tab: '+o.out.length+' shapes'+(q.skip?'. Skipped '+q.skip+' unsupported items':'')+(q.img?'. '+q.img+' picture reference(s) not placed; open the DXF if you need them':''))}
+  const q=dwgToDxf(db);if(!q.n&&!q.img){flash('No supported shapes found in this DWG'+(q.skip?' ('+q.skip+' unsupported items)':''));return}
+  const o=dxfShapes(q.txt);sheetNew((f.name||'Drawing').replace(/\.[^.]+$/,'').slice(0,24),o.out);fit();
+  const c=SH[SC];c.refs=o.imgs.map(m=>({x:m.x,y:m.y,w:m.w,name:m.name||''}));const np=refsToPics(c);save();draw();let msg='Opened DWG in a new tab: '+o.out.length+' shapes'+(q.skip?'. Skipped '+q.skip+' unsupported items':'');
+  if(np){const miss=await picMiss(shapes);draw();msg+='. Pictures: '+(np-miss.length)+' placed'+(miss.length?', '+miss.length+' missing ('+[...new Set(miss)].slice(0,3).join(', ')+')':'')}else if(q.img)msg+='. '+q.img+' picture(s) found but their file names could not be read';
+  flash(msg)}
  catch(e){flash('Could not read this DWG: '+String(e&&e.message||e).slice(0,160))}}
 $('#imp').onclick=()=>{$('#dfile').accept='';$('#dfile').click()};
 $('#apic').onclick=()=>{$('#dfile').accept='image/*';$('#dfile').click()};
@@ -746,7 +751,7 @@ async function openDoc(f){if(/\.dwg$/i.test(f.name||'')){await openDwg(f);return
  if(np){const miss=await picMiss(shapes);draw();msg+='. Pictures: '+(np-miss.length)+' placed'+(miss.length?', '+miss.length+' missing ('+[...new Set(miss)].slice(0,3).join(', ')+(miss.length>3?'…':'')+'). Use Add pictures… or open a zip of the folder':'')}
  flash(msg)}
 $('#dfile').onchange=async e=>{const fs=[...e.target.files];e.target.value='';if(!fs.length)return;const docs=[],pics=[];
- for(const f of fs){if(/\.zip$/i.test(f.name)){try{for(const z of await unzip(await f.arrayBuffer())){const q=new File([z.bytes],z.name);if(IMX.test(z.name))pics.push(q);else if(/\.(dxf|json|draft)$/i.test(z.name))docs.push(q)}}catch(x){flash('Could not read this zip file')}}else if(IMX.test(f.name))pics.push(f);else docs.push(f)}
+ for(const f of fs){if(/\.zip$/i.test(f.name)){try{for(const z of await unzip(await f.arrayBuffer())){const q=new File([z.bytes],z.name);if(IMX.test(z.name))pics.push(q);else if(/\.(dxf|dwg|json|draft)$/i.test(z.name))docs.push(q)}}catch(x){flash('Could not read this zip file')}}else if(IMX.test(f.name))pics.push(f);else docs.push(f)}
  if(pics.length){flash('Saving '+pics.length+' picture'+(pics.length>1?'s':'')+'…');await libAdd(pics);PICEL.clear();draw()}
  if(!docs.length){const c=SH[SC];if(shapes.some(q=>q.t=='pic')){const miss=await picMiss(shapes);draw();flash('Pictures saved. '+(shapes.filter(q=>q.t=='pic').length-miss.length)+' placed'+(miss.length?', '+miss.length+' still missing':''))}else flash(pics.length?'Pictures saved in the app. They are placed automatically when you open a DXF that uses them':'Nothing to open');return}
  for(const f of docs)await openDoc(f);if(pics.length&&docs.length)flash('Opened '+docs.length+' drawing'+(docs.length>1?'s':'')+' with '+pics.length+' picture'+(pics.length>1?'s':'')+' saved in the app')};
