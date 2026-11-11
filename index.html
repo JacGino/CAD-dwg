@@ -595,8 +595,10 @@ mn.addEventListener('click',()=>{mn.hidden=true});
 addEventListener('pointerdown',e=>{if(!mn.hidden&&!mn.contains(e.target)&&!fm.contains(e.target))mn.hidden=true});
 const num=(e,c)=>{const q=e.g.find(p=>p[0]==c);return q?parseFloat(q[1])||0:0},all=(e,c)=>e.g.filter(p=>p[0]==c).map(p=>parseFloat(p[1])||0);
 const ACI={1:'#e03131',2:'#e6b800',3:'#2f9e44',4:'#0c8599',5:'#1c7ed6',6:'#ae3ec9'};
-function dxfStyle(e){const o={},q=e.g.find(p=>p[0]==62);if(q&&ACI[q[1]])o.c=ACI[q[1]];const l=e.g.find(p=>p[0]==6);
- if(l){const n=l[1].toUpperCase();o.d=/CENTER/.test(n)?'center':/DASHDOT/.test(n)?'dashdot':/DASH|HIDDEN/.test(n)?'dashed':/DOT/.test(n)?'dotted':'solid'}return o}
+function aciHex(n){n=+n;if(ACI[n])return ACI[n];if(n==8)return'#808080';if(n==9)return'#c0c0c0';if(n>=250&&n<=255){const v=[51,91,132,173,214,255][n-250];return'#'+[v,v,v].map(x=>x.toString(16).padStart(2,'0')).join('')}
+ if(n<10||n>249)return null;const k=n-10,hu=Math.floor(k/10)*15,j=k%10,sa=j%2?1/3:1,va=[1,1,.741,.741,.506,.506,.408,.408,.31,.31][j],f=(m)=>{const kk=(m+hu/60)%6,c=va*sa,x=c*(1-Math.abs(kk%2-1));const a=kk<1?[c,x,0]:kk<2?[x,c,0]:kk<3?[0,c,x]:kk<4?[0,x,c]:kk<5?[x,0,c]:[c,0,x];return a};const a=f(0),m0=va-va*sa;return'#'+a.map(z=>Math.round((z+m0)*255).toString(16).padStart(2,'0')).join('')}
+function dxfStyle(e){const o={},q=e.g.find(p=>p[0]==62),tc=e.g.find(p=>p[0]==420);if(tc&&+tc[1]>0)o.c='#'+((+tc[1])&0xffffff).toString(16).padStart(6,'0');else if(q){const h=aciHex(q[1]);if(h)o.c=h}const l=e.g.find(p=>p[0]==6);
+ if(l){const n=l[1].toUpperCase();o.d=/CENTER|PHANTOM/.test(n)?'center':/DASHDOT|BORDER|ISO0[4-9]|ISO1/.test(n)?'dashdot':/DASH|HIDDEN|ISO0[23]/.test(n)?'dashed':/DOT/.test(n)?'dotted':'solid'}return o}
 const FAMX=',"IBM Plex Sans",system-ui,sans-serif';
 function fontStr(s,px){return(s.i?'italic ':'')+(s.b?'bold ':'')+px+'px '+(s.f?'"'+s.f+'"':'')+(s.f?FAMX:FAMX.slice(1))}
 function txW(t,h,s){cx.save();cx.font=fontStr(s||{},100);const w=cx.measureText(t).width/100*h;cx.restore();return w}
@@ -651,7 +653,8 @@ function dxfShapes(txt){const L=txt.split(/\r?\n/),ents=[];let sec='',cu=null;
    const dxf=e.g.some(p=>p[0]==11);
    if(mt){rot=dxf&&(num(e,11)||num(e,21))?Math.atan2(num(e,21),num(e,11))*180/Math.PI:num(e,50);
     str=e.g.filter(p=>p[0]==3).map(p=>p[1]).join('')+(e.g.find(p=>p[0]==1)||[0,''])[1];
-    {const pf0=[];let anyP=0;const cl=str.split(/\\P/).map(pt=>{let pf=null;pt=pt.replace(/\\p([^;]*);/g,(m,q)=>{pf=Object.assign(pf||{},parsePf(q));anyP=1;return''});pf0.push(pf);return pt});str=cl.join('\n');mtPf=anyP?pf0:null}
+    if(!st.c){const mc=str.match(/\\C(\d+);/);if(mc){const h=aciHex(mc[1]);if(h)st.c=h}}
+     {const pf0=[];let anyP=0;const cl=str.split(/\\P/).map(pt=>{let pf=null;pt=pt.replace(/\\p([^;]*);/g,(m,q)=>{pf=Object.assign(pf||{},parsePf(q));anyP=1;return''});pf0.push(pf);return pt});str=cl.join('\n');mtPf=anyP?pf0:null}
     str=str.replace(/\^I/g,'\t').replace(/\\~/g,' ').replace(/\\S([^;]*);/g,(m,q)=>q.replace(/[\^#]/g,'/')).replace(/\\[fFcCHhQqTtAaLlOoKkWw][^;]*;/g,'').replace(/\\([\\{}])/g,'$1').replace(/[{}]/g,'');
     ls=1.5}
    else{rot=num(e,50);str=(e.g.find(p=>p[0]==1)||[0,''])[1]}
@@ -685,12 +688,15 @@ async function dwgEngine(){if(DWGLIB)return DWGLIB;const cand=['./libredwg-web.j
   DWGLIB={lib,FT};return DWGLIB}catch(e){errs.push(u.replace(/^https?:\/\/[^\/]+\//,'')+': '+(e&&e.message||e))}}
  throw new Error(errs.join(' | '))}
 const AR=v=>Array.isArray(v)?v:(v instanceof Map?[...v.values()]:(v&&typeof v=='object'?(typeof v.length=='number'&&typeof v.get=='function'?Array.from({length:v.length},(_,i)=>v.get(i)):Object.values(v)):[]));
-function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixed(6):String(v))},st={skip:0,n:0,img:0,im:[]};
+function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixed(6):String(v))},st={skip:0,n:0,img:0,im:[],skT:{}};
  const P=v=>v?{x:+v.x||0,y:+v.y||0}:{x:0,y:0},DEG=180/Math.PI,rad=v=>Math.abs(v)>6.3?v/DEG:v,deg=v=>Math.abs(v)>6.3?v:v*DEG;
  const blocks=(()=>{const m=new Map(),add=(k,b)=>{if(k&&b&&b.entities)m.set(String(k).toLowerCase(),AR(b.entities))};
   const B=db&&db.blocks;if(B instanceof Map)B.forEach((b,k)=>add(b&&b.name||k,b));else if(Array.isArray(B))B.forEach(b=>add(b&&b.name,b));else if(B&&typeof B=='object')for(const k in B)add(B[k]&&B[k].name||k,B[k]);
   const T=db&&db.tables&&db.tables.BLOCK_RECORD,L=AR(T&&(T.entries||T));L.forEach(b=>add(b&&b.name,b));return m})();
- const col=e=>{const c=e.colorIndex!=null?e.colorIndex:e.color;if(Number.isFinite(c)&&c>0&&c<256)g(62,c)};
+ const LY=new Map();try{const T=db&&db.tables&&db.tables.LAYER;AR(T&&(T.entries||T)).forEach(l=>{if(l&&l.name!=null)LY.set(String(l.name),l)})}catch(x){}
+ const ltOf=e=>{let t=String(e.lineType||e.linetype||e.lineTypeName||'');const l=LY.get(String(e.layer));if(!t||/^by/i.test(t))t=String((l&&(l.lineType||l.linetype||l.lineTypeName))||'');if(!t||/^(continuous|by)/i.test(t)){const ln=String(e.layer||'');if(/DASH|CENTER|HIDDEN|PHANTOM|DOT/i.test(ln))t=ln}return t};
+ const col=e=>{let c=e.colorIndex!=null?e.colorIndex:e.color,tc=(+e.color>255)?+e.color:(+e.trueColor>0?+e.trueColor:0);if(!tc&&(c==null||c===256||c===0)){const l=LY.get(String(e.layer));c=l&&(l.colorIndex!=null?l.colorIndex:l.color);if(+c>255){tc=+c;c=0}}
+  if(tc)g(420,tc&0xffffff);else{c=Math.abs(+c);if(Number.isFinite(c)&&c>0&&c<256)g(62,c)}const lt=ltOf(e);if(lt&&!/^(continuous|by)/i.test(lt))g(6,lt)};
  const X=(p,T)=>T?{x:T.dx+p.x*T.sx*T.c-p.y*T.sy*T.s,y:T.dy+p.x*T.sx*T.s+p.y*T.sy*T.c}:p;
  const line=(a,b,e)=>{g(0,'LINE');col(e);g(10,a.x);g(20,a.y);g(11,b.x);g(21,b.y);st.n++};
  const arc=(c,r,a1,a2,e)=>{g(0,'ARC');col(e);g(10,c.x);g(20,c.y);g(40,r);g(50,a1);g(51,a2);st.n++};
@@ -712,9 +718,10 @@ function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixe
     T2={dx:ip.x,dy:ip.y,sx:(e.xScale==null?1:+e.xScale)*(T?T.sx:1),sy:(e.yScale==null?1:+e.yScale)*(T?T.sy:1),r,c:Math.cos(r),s:Math.sin(r),rd:r*DEG};
     // nested transform: compose by transforming the insertion point through T (done above) and accumulating rotation/scale
     for(const x of b)ent(x,T2,d+1)}
+  else if(ty=='DIMENSION'&&d<4&&(e.name||e.block||e.blockName)&&blocks.get(String(e.name||e.block||e.blockName).toLowerCase())){for(const x of blocks.get(String(e.name||e.block||e.blockName).toLowerCase()))ent(x,T,d+1)}
   else if(ty=='IMAGE'){const ps=P(e.position||e.insertionPoint),u=P(e.uPixel||e.uVector||{x:1,y:0}),v=P(e.vPixel||e.vVector||{x:0,y:1}),sz=e.imageSize||e.size||{x:1,y:1},q=X(ps,T),h=e.imageDefHandle!=null?e.imageDefHandle:(e.imageDef&&e.imageDef.handle!=null?e.imageDef.handle:e.imageDefId);
    if(!st.dgI)try{st.dgI=JSON.stringify(e,(k,v)=>typeof v=='string'&&v.length>30?v.slice(0,30)+'…':(Array.isArray(v)&&v.length>3?v.slice(0,3):v)).replace(/,/g,', ').slice(0,700)}catch(x){st.dgI=Object.keys(e).join(', ')}g(0,'IMAGE');g(10,q.x);g(20,q.y);g(11,u.x*(T?T.sx:1));g(21,u.y*(T?T.sx:1));g(12,v.x);g(22,v.y);g(13,+sz.x||1);g(23,+sz.y||1);g(340,h==null?'':String(h));st.img++;st.im.push(h==null?'':String(h))}
-  else if(ty&&ty!='VERTEX'&&ty!='SEQEND'&&ty!='ATTRIB'&&ty!='POINT'&&ty!='VIEWPORT')st.skip++};
+  else if(ty&&ty!='VERTEX'&&ty!='SEQEND'&&ty!='ATTRIB'&&ty!='POINT'&&ty!='VIEWPORT'){st.skip++;st.skT[ty]=(st.skT[ty]||0)+1}};
  for(const e of AR(db&&db.entities))ent(e,null,0);
  const OB0=(()=>{const v=db&&db.objects;if(v instanceof Map)return[...v.entries()];if(Array.isArray(v))return v.map((x,i)=>[i,x]);return v&&typeof v=='object'?Object.entries(v):[]})(),OB=[];OB0.forEach(([k,v])=>{if(Array.isArray(v))v.forEach(x=>OB.push([k,x]));else if(v&&typeof v=='object'&&!v.handle&&!v.type&&Object.values(v).some(Array.isArray)){for(const k2 in v)AR(v[k2]).forEach(x=>OB.push([k2,x]))}else OB.push([k,v])});
  const tyOf=(x,k)=>String((x&&(x.type||x.objectType||x.dxfName))||k||'').toUpperCase(),IMX2=/\.(jpe?g|png|bmp|tiff?|gif|webp)$/i,fnOf=x=>{for(const f of['fileName','filename','fileNameStr','imageFileName','filePath','file_path','filepath','path','file','fileNameString','name']){if(typeof x[f]=='string'&&x[f])return x[f]}for(const f in x)if(typeof x[f]=='string'&&IMX2.test(x[f]))return x[f];return''},
@@ -722,13 +729,13 @@ function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixe
  {const h={};OB.forEach(([k,x])=>{const t=tyOf(x,k)||typeof x;h[t]=(h[t]||0)+1});st.dgO='db keys: '+Object.keys(db||{}).join(', ')+' | '+OB.length+' objects: '+Object.entries(h).sort((a,b)=>b[1]-a[1]).slice(0,5).map(a=>a.join('×')).join(', ')+(defs[0]?'; def keys: '+Object.keys(defs[0][1]).join(', '):'');{const o1=(defs[0]||OB[0]||[])[1];if(o1&&typeof o1=='object')st.dgO+=' | sample: '+JSON.stringify(o1,(kk,vv)=>typeof vv=='string'&&vv.length>40?vv.slice(0,40)+'…':(Array.isArray(vv)&&vv.length>3?vv.slice(0,3):vv)).slice(0,400)}
   }
  if(!defs.length)st.im=[];
- return{dgP:(st.polyN&&!st.polyC)?st.dgP:'',dgI:st.dgI,dgO:st.dgO,txt:(ob?'0\nSECTION\n2\nOBJECTS\n'+ob+'0\nENDSEC\n':'')+'0\nSECTION\n2\nENTITIES\n'+(()=>{let s='';for(let i=0;i<o.length;i+=2)s+=o[i]+'\n'+o[i+1]+'\n';return s})()+'0\nENDSEC\n0\nEOF\n',n:st.n,skip:st.skip,img:st.img}}
+ return{skT:Object.entries(st.skT).sort((a,b)=>b[1]-a[1]).slice(0,6).map(a=>a[0]+'×'+a[1]).join(', '),dgP:(st.polyN&&!st.polyC)?st.dgP:'',dgI:st.dgI,dgO:st.dgO,txt:(ob?'0\nSECTION\n2\nOBJECTS\n'+ob+'0\nENDSEC\n':'')+'0\nSECTION\n2\nENTITIES\n'+(()=>{let s='';for(let i=0;i<o.length;i+=2)s+=o[i]+'\n'+o[i+1]+'\n';return s})()+'0\nENDSEC\n0\nEOF\n',n:st.n,skip:st.skip,img:st.img}}
 async function openDwg(f){flash('Opening DWG… the first time needs internet to load the DWG reader');
  let E;try{E=await dwgEngine()}catch(e){flash('The DWG reader could not be loaded ('+String(e.message||e).slice(0,160)+'). Open the file once while online, or convert it to DXF');return}
  try{const buf=await f.arrayBuffer();let dwg=E.lib.dwg_read_data(buf,E.FT?E.FT.DWG:0);if(!dwg)throw new Error('could not read this DWG');const db=E.lib.convert(dwg);try{E.lib.dwg_free(dwg)}catch(e){}
   const q=dwgToDxf(db);if(!q.n&&!q.img){flash('No supported shapes found in this DWG'+(q.skip?' ('+q.skip+' unsupported items)':''));return}
   const o=dxfShapes(q.txt);sheetNew((f.name||'Drawing').replace(/\.[^.]+$/,'').slice(0,24),o.out);fit();
-  const c=SH[SC],unn=o.imgs.filter(m=>!m.name).length;c.refs=o.imgs.filter(m=>m.name).map(m=>({x:m.x,y:m.y,w:m.w,name:m.name}));const np=refsToPics(c);save();draw();let msg='Opened DWG in a new tab: '+o.out.length+' shapes'+(q.skip?'. Skipped '+q.skip+' unsupported items':'');
+  const c=SH[SC],unn=o.imgs.filter(m=>!m.name).length;c.refs=o.imgs.filter(m=>m.name).map(m=>({x:m.x,y:m.y,w:m.w,name:m.name}));const np=refsToPics(c);save();draw();let msg='Opened DWG in a new tab: '+o.out.length+' shapes'+(q.skip?'. Skipped '+q.skip+' unsupported items'+(q.skT?' ('+q.skT+')':''):'');
   if(np){const miss=await picMiss(shapes);draw();msg+='. Pictures: '+(np-miss.length)+' placed'+(miss.length?', '+miss.length+' missing ('+[...new Set(miss)].slice(0,3).join(', ')+')':'')}if(unn)msg+='. '+unn+' picture(s) have no readable file name and were not placed. [info] IMAGE fields: '+(q.dgI||'-')+' | '+(q.dgO||'no objects');
   if(q.dgP)msg+='. [info] polyline: '+q.dgP;
   flash(msg)}
