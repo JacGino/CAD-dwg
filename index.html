@@ -325,7 +325,7 @@ function drawNow(){if(tx)txPos();if(!V)return;const cs=getComputedStyle(document
  if(IMG){const[ix,iy]=toS({x:IMG.x,y:IMG.y}),w=IMG.w*V.k,h=w*IMG.el.naturalHeight/IMG.el.naturalWidth;if(cropOn&&cropT===IMG){const t=IMG.cr;IMG.cr=null;cx.globalAlpha=IMG.o*.3;imgPaint(ix,iy,w,h);IMG.cr=t}cx.globalAlpha=IMG.o;imgPaint(ix,iy,w,h);cx.globalAlpha=1;if(cropOn&&cropT===IMG){const q=IMG.cr||{l:0,t:0,r:0,b:0},x0=ix+w*q.l,x1=ix+w*(1-q.r),y0=iy+h*q.t,y1=iy+h*(1-q.b);cx.setLineDash([6,4]);cx.strokeStyle='#fff';cx.lineWidth=1.5;cx.strokeRect(x0,y0,x1-x0,y1-y0);cx.setLineDash([]);cx.fillStyle='#fff';for(const[hx,hy]of cropHandles(x0,y0,x1,y1))cx.fillRect(hx-6,hy-6,12,12)}if(adj){cx.setLineDash([6,4]);cx.strokeStyle=c('--acc');cx.lineWidth=1.5;cx.strokeRect(ix,iy,w,h);cx.setLineDash([]);cx.fillStyle=c('--acc');for(const[hx,hy]of[[ix,iy],[ix+w,iy],[ix,iy+h],[ix+w,iy+h]])cx.fillRect(hx-6,hy-6,12,12)}}
  cx.lineJoin='round';cx.font='12px "IBM Plex Sans",system-ui,sans-serif';
  const ss=new Set(S());
- {const ink=c('--cink'),acc=c('--acc'),cb=c('--cbg'),dk=/^#[0-9a-f]{6}$/i.test(cb)?lumOf(cb)<.55:matchMedia('(prefers-color-scheme:dark)').matches,AC=new Map(),adapt=k=>{if(!k)return ink;let v=AC.get(k);if(v===undefined){v=k;if(/^#[0-9a-f]{6}$/i.test(k)){const l=lumOf(k);if((dk&&l<.2)||(!dk&&l>.8))v=ink}AC.set(k,v)}return v};let bk=null;const fl=()=>{if(bk!==null){cx.stroke();cx.setLineDash([]);bk=null}};
+ {const ink=c('--cink'),acc=c('--acc'),cb=c('--cbg'),dk=/^#[0-9a-f]{6}$/i.test(cb)?lumOf(cb)<.55:matchMedia('(prefers-color-scheme:dark)').matches,AC=new Map(),adapt=k=>{if(!k)return ink;let v=AC.get(k);if(v===undefined){v=k;if(/^#[0-9a-f]{6}$/i.test(k)){const[r0,g0,b0]=hx2(k);if((dk&&Math.max(r0,g0,b0)<45)||(!dk&&Math.min(r0,g0,b0)>210))v=ink}AC.set(k,v)}return v};let bk=null;const fl=()=>{if(bk!==null){cx.stroke();cx.setLineDash([]);bk=null}};
  shapes.forEach((s,i)=>{const sl=ss.has(i);
   if(!sl&&s.t=='line'){const[x1,y1]=toS(s.a),[x2,y2]=toS(s.b);if((x1<0&&x2<0)||(x1>W&&x2>W)||(y1<0&&y2<0)||(y1>H&&y2>H))return;const col=adapt(s.c),w=lw(s),k=col+'|'+w+'|'+(s.d||'');if(bk!==k){fl();cx.strokeStyle=col;cx.lineWidth=w;cx.setLineDash(DASH[s.d]||[]);cx.beginPath();bk=k}cx.moveTo(x1,y1);cx.lineTo(x2,y2);return}
   fl();if(sl){cx.globalAlpha=.35;shape(s,acc,lw(s)+6,1);cx.globalAlpha=1}shape(s,adapt(s.c),lw(s))});fl()}if(tx&&tx.pv&&tx.i<0)shape(Object.assign({t:'text',a:tx.a,b:tx.a,s:$('#tt').value,h:parseFloat($('#th').value)||5,ls:parseFloat($('#tls').value)||1.2},tx.w>0?{w:tx.w}:{},tx.fm||{}),(tx.fm&&tx.fm.c)||c('--cink'),1);
@@ -490,7 +490,7 @@ function buildPdf(win,fit,pg){
  let c=win?'1 w 0 G 0 g\n'+n(X(b.x0))+' '+n(Y(b.y0))+' '+n((b.x1-b.x0)*s)+' '+n((b.y1-b.y0)*s)+' re S\n0.7 w\n':'1 w 0 G 0 g\n'+n(m)+' '+n(m)+' '+n(aw)+' '+n(ah+tb)+' re S\n'+n(m)+' '+n(m+tb)+' m '+n(pw-m)+' '+n(m+tb)+' l S\n0.7 w\n';
  if(win)c+='q '+n(X(b.x0))+' '+n(Y(b.y0))+' '+n((b.x1-b.x0)*s)+' '+n((b.y1-b.y0)*s)+' re W n\n';
  const IM=[];
- for(const t of shapes){if(t.t=='pic'){const m=pdfImg(t,s);if(m){IM.push(m);const hh=picH(t)*s,L=X(t.a.x),Tp=Y(t.a.y),q=m.q;c+='q '+n(t.w*s*m.fw)+' 0 0 '+n(hh*m.fh)+' '+n(L+t.w*s*q.l)+' '+n(Tp-hh*q.t-hh*m.fh)+' cm /Im'+(IM.length-1)+' Do Q\n'}continue}const a=t.a,e=t.b,x1=X(a.x),y1=Y(a.y),x2=X(e.x),y2=Y(e.y),fl=t.f&&(t.t=='rect'||t.t=='circ'||t.t=='free'),pc0=(t.c&&/^#[0-9a-f]{6}$/i.test(t.c)&&lumOf(t.c)>.8)?'#000000':(t.c||'#000000'),rc=rgb(pc0),rf=fl?lite(pc0):rc;
+ for(const t of shapes){if(t.t=='pic'){const m=pdfImg(t,s);if(m){IM.push(m);const hh=picH(t)*s,L=X(t.a.x),Tp=Y(t.a.y),q=m.q;c+='q '+n(t.w*s*m.fw)+' 0 0 '+n(hh*m.fh)+' '+n(L+t.w*s*q.l)+' '+n(Tp-hh*q.t-hh*m.fh)+' cm /Im'+(IM.length-1)+' Do Q\n'}continue}const a=t.a,e=t.b,x1=X(a.x),y1=Y(a.y),x2=X(e.x),y2=Y(e.y),fl=t.f&&(t.t=='rect'||t.t=='circ'||t.t=='free'),pc0=(t.c&&/^#[0-9a-f]{6}$/i.test(t.c)&&Math.min(...hx2(t.c))>210)?'#000000':(t.c||'#000000'),rc=rgb(pc0),rf=fl?lite(pc0):rc;
   c+=rc+' RG '+rf+' rg '+n(lmm(t)*2.835)+' w ['+(DASH[t.d]||[]).map(v=>n(v*.5)).join(' ')+'] 0 d\n';
   if(t.t=='text'){const q=(t.r||0)*Math.PI/180,co=Math.cos(q),si=Math.sin(q),fn=(t.bo||t.b===true)?(t.i?'/F4':'/F2'):(t.i?'/F3':'/F1'),hh=t.h*s;txLay(t).forEach((ln,k)=>{const d=k*t.h*(t.ls||1.2)*s;ln.segs.forEach(g=>{const gx=g.x*s,bx=x1+si*d+co*gx,by=y1-co*d+si*gx;let tw='';if(g.j&&g.t.indexOf(' ')>0)tw=n(g.j*s/(g.t.split(' ').length-1))+' Tw ';
    c+='BT '+fn+' '+n(hh)+' Tf '+tw+n(co)+' '+n(si)+' '+n(-si)+' '+n(co)+' '+n(bx)+' '+n(by)+' Tm ('+g.t.replace(/[^\x20-\x7e]/g,'?').replace(/([\\()])/g,'\\$1')+') Tj '+(tw?'0 Tw ':'')+'ET\n';
@@ -595,7 +595,7 @@ mn.addEventListener('click',()=>{mn.hidden=true});
 addEventListener('pointerdown',e=>{if(!mn.hidden&&!mn.contains(e.target)&&!fm.contains(e.target))mn.hidden=true});
 const num=(e,c)=>{const q=e.g.find(p=>p[0]==c);return q?parseFloat(q[1])||0:0},all=(e,c)=>e.g.filter(p=>p[0]==c).map(p=>parseFloat(p[1])||0);
 const ACI={1:'#e03131',2:'#e6b800',3:'#2f9e44',4:'#0c8599',5:'#1c7ed6',6:'#ae3ec9'};
-function aciHex(n){n=+n;if(ACI[n])return ACI[n];if(n==8)return'#808080';if(n==9)return'#c0c0c0';if(n>=250&&n<=255){const v=[51,91,132,173,214,255][n-250];return'#'+[v,v,v].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function aciHex(n){n=+n;const PU={1:'#ff0000',2:'#ffff00',3:'#00ff00',4:'#00ffff',5:'#0000ff',6:'#ff00ff'};if(PU[n])return PU[n];if(n==8)return'#808080';if(n==9)return'#c0c0c0';if(n>=250&&n<=255){const v=[51,91,132,173,214,255][n-250];return'#'+[v,v,v].map(x=>x.toString(16).padStart(2,'0')).join('')}
  if(n<10||n>249)return null;const k=n-10,hu=Math.floor(k/10)*15,j=k%10,sa=j%2?1/3:1,va=[1,1,.741,.741,.506,.506,.408,.408,.31,.31][j],f=(m)=>{const kk=(m+hu/60)%6,c=va*sa,x=c*(1-Math.abs(kk%2-1));const a=kk<1?[c,x,0]:kk<2?[x,c,0]:kk<3?[0,c,x]:kk<4?[0,x,c]:kk<5?[x,0,c]:[c,0,x];return a};const a=f(0),m0=va-va*sa;return'#'+a.map(z=>Math.round((z+m0)*255).toString(16).padStart(2,'0')).join('')}
 function dxfStyle(e){const o={},q=e.g.find(p=>p[0]==62),tc=e.g.find(p=>p[0]==420);if(tc&&+tc[1]>0)o.c='#'+((+tc[1])&0xffffff).toString(16).padStart(6,'0');else if(q){const h=aciHex(q[1]);if(h)o.c=h}const l=e.g.find(p=>p[0]==6);
  if(l){const n=l[1].toUpperCase();o.d=/CENTER|PHANTOM/.test(n)?'center':/DASHDOT|BORDER|ISO0[4-9]|ISO1/.test(n)?'dashdot':/DASH|HIDDEN|ISO0[23]/.test(n)?'dashed':/DOT/.test(n)?'dotted':'solid'}return o}
@@ -702,13 +702,18 @@ function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixe
   const B=db&&db.blocks;if(B instanceof Map)B.forEach((b,k)=>add(b&&b.name||k,b));else if(Array.isArray(B))B.forEach(b=>add(b&&b.name,b));else if(B&&typeof B=='object')for(const k in B)add(B[k]&&B[k].name||k,B[k]);
   const T=db&&db.tables&&db.tables.BLOCK_RECORD,L=AR(T&&(T.entries||T));L.forEach(b=>add(b&&b.name,b));return m})();
  const LY=new Map();try{const T=db&&db.tables&&db.tables.LAYER;AR(T&&(T.entries||T)).forEach(l=>{if(l&&l.name!=null)LY.set(String(l.name),l)})}catch(x){}
- const ltOf=e=>{let t=String(e.lineType||e.linetype||e.lineTypeName||'');const l=LY.get(String(e.layer));if(!t||/^by/i.test(t))t=String((l&&(l.lineType||l.linetype||l.lineTypeName))||'');if(!t||/^(continuous|by)/i.test(t)){const ln=String(e.layer||'');if(/DASH|CENTER|HIDDEN|PHANTOM|DOT/i.test(ln))t=ln}return t};
- const col=e=>{let c=e.colorIndex!=null?e.colorIndex:e.color,tc=(+e.color>255)?+e.color:(+e.trueColor>0?+e.trueColor:0);if(!tc&&(c==null||c===256||c===0)){const l=LY.get(String(e.layer));c=l&&(l.colorIndex!=null?l.colorIndex:l.color);if(+c>255){tc=+c;c=0}}
-  if(tc)g(420,tc&0xffffff);else{c=Math.abs(+c);if(Number.isFinite(c)&&c>0&&c<256)g(62,c)}const lt=ltOf(e);if(lt&&!/^(continuous|by)/i.test(lt))g(6,lt)};
+ let PAR=null;
+ const resCol=(e,par)=>{const ln=String(e.layer==null?'':e.layer),useP=par&&(ln==='0'||ln===''),lay=useP?par.layer:ln,l=LY.get(String(lay));
+  let ci=e.colorIndex!=null?+e.colorIndex:256,tc=+e.color>0?+e.color:(+e.trueColor>0?+e.trueColor:0),lt=String(e.lineType||e.linetype||e.lineTypeName||'');
+  if(!tc){if(ci===0&&par){tc=par.tc;ci=par.ci}else if(ci===256||!Number.isFinite(ci)){if(l){const lc=+l.color>0?+l.color:0;if(lc)tc=lc;else ci=Math.abs(+(l.colorIndex!=null?l.colorIndex:7))||7}else ci=7}}
+  if(!lt||/^bylayer/i.test(lt)){lt=String((l&&(l.lineType||l.linetype||l.lineTypeName))||'')}else if(/^byblock/i.test(lt)){lt=par?par.lt:''}
+  if(!lt||/^(continuous|by)/i.test(lt)){if(/DASH|CENTER|HIDDEN|PHANTOM|DOT/i.test(String(lay)))lt=String(lay);else if(par&&par.lt&&/^byblock/i.test(String(e.lineType||'')))lt=par.lt}
+  return{tc,ci,lt,layer:lay}};
+ const col=e=>{const r=resCol(e,PAR);if(r.tc)g(420,r.tc&0xffffff);else if(r.ci>0&&r.ci<256)g(62,r.ci);if(r.lt&&!/^(continuous|by)/i.test(r.lt))g(6,r.lt)};
  const X=(p,T)=>T?{x:T.dx+p.x*T.sx*T.c-p.y*T.sy*T.s,y:T.dy+p.x*T.sx*T.s+p.y*T.sy*T.c}:p;
  const line=(a,b,e)=>{g(0,'LINE');col(e);g(10,a.x);g(20,a.y);g(11,b.x);g(21,b.y);st.n++};
  const arc=(c,r,a1,a2,e)=>{g(0,'ARC');col(e);g(10,c.x);g(20,c.y);g(40,r);g(50,a1);g(51,a2);st.n++};
- const ent=(e,T,d)=>{if(!e)return;const ty=String(e.type||'').toUpperCase(),rot=T?T.rd:0,sc=T?Math.abs(T.sx):1;
+ const ent=(e,T,d)=>{if(!e)return;if(e.isVisible===false)return;{const l0=LY.get(String(e.layer));if(l0&&(l0.isOff===true||l0.off===true||l0.isFrozen===true||l0.frozen===true||+l0.colorIndex<0))return}const ty=String(e.type||'').toUpperCase(),rot=T?T.rd:0,sc=T?Math.abs(T.sx):1;
   if(ty=='LINE')line(X(P(e.startPoint),T),X(P(e.endPoint),T),e);
   else if(ty=='CIRCLE'){const c=X(P(e.center),T);g(0,'CIRCLE');col(e);g(10,c.x);g(20,c.y);g(40,(+e.radius||0)*sc);st.n++}
   else if(ty=='ARC'){let a1=+e.startAngle||0,a2=+e.endAngle||0;const big=Math.abs(a1)>6.3||Math.abs(a2)>6.3;if(!big){a1*=DEG;a2*=DEG}arc(X(P(e.center),T),(+e.radius||0)*sc,a1+rot,a2+rot,e)}
@@ -725,8 +730,8 @@ function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixe
   else if(ty=='INSERT'&&d<4){const b=blocks.get(String(e.name||'').toLowerCase());if(!b){st.skip++;return}const ip=X(P(e.insertionPoint),T),r=rad(+e.rotation||0)+(T?T.r:0),
     T2={dx:ip.x,dy:ip.y,sx:(e.xScale==null?1:+e.xScale)*(T?T.sx:1),sy:(e.yScale==null?1:+e.yScale)*(T?T.sy:1),r,c:Math.cos(r),s:Math.sin(r),rd:r*DEG};
     // nested transform: compose by transforming the insertion point through T (done above) and accumulating rotation/scale
-    for(const x of b)ent(x,T2,d+1)}
-  else if(ty=='DIMENSION'&&d<4&&(e.name||e.block||e.blockName)&&blocks.get(String(e.name||e.block||e.blockName).toLowerCase())){for(const x of blocks.get(String(e.name||e.block||e.blockName).toLowerCase()))ent(x,T,d+1)}
+    {const pv=PAR;PAR=resCol(e,PAR);for(const x of b)ent(x,T2,d+1);PAR=pv}}
+  else if(ty=='DIMENSION'&&d<4&&(e.name||e.block||e.blockName)&&blocks.get(String(e.name||e.block||e.blockName).toLowerCase())){const pv=PAR;PAR=resCol(e,PAR);for(const x of blocks.get(String(e.name||e.block||e.blockName).toLowerCase()))ent(x,T,d+1);PAR=pv}
   else if(ty=='HATCH'&&d<5){st.hN=(st.hN||0)+1;const LP=[];try{for(const bp of AR(e.boundaryPaths||e.paths||e.boundaries||e.boundaryPathData)){const L=[],pv=bp.vertices||(bp.polyline&&bp.polyline.vertices)||bp.polylineVertices,pt=v=>{const q=X(P(v),T);return[q.x,q.y]};
      if(pv&&AR(pv).length)AR(pv).forEach(v=>L.push(pt(v)));
      else for(const ed of AR(bp.edges||bp.segments)){const s0=ed.start||ed.startPoint,e0=ed.end||ed.endPoint;
@@ -738,7 +743,7 @@ function dwgToDxf(db){const o=[],g=(c,v)=>{o.push(c,typeof v=='number'?+v.toFixe
     const solid=e.solidFill===1||e.solidFill===true||e.isSolid===true||e.isSolidFill===true||/^solid$/i.test(String(e.patternName||e.pattern||''));
     g(0,'CADHATCH');col(e);g(40,solid?.55:.22);g(92,0);for(const[x,y]of LP[0]){g(10,x);g(20,y)}st.n++;st.hOK=(st.hOK||0)+1}
   else if(ty=='OLE2FRAME'&&d<5){let A=null,B=null;for(const[k1,k2]of[['upperLeftCorner','lowerRightCorner'],['upperLeft','lowerRight'],['pt1','pt2'],['leftUpper','rightLower'],['firstCorner','secondCorner'],['corner1','corner2']])if(e[k1]&&e[k2]){A=X(P(e[k1]),T);B=X(P(e[k2]),T);break}
-    if(!A){st.skip++;st.skT.OLE2FRAME=(st.skT.OLE2FRAME||0)+1;if(!st.dgE)try{st.dgE=JSON.stringify(e,(k,v)=>typeof v=='string'&&v.length>20?v.slice(0,20):(Array.isArray(v)&&v.length>2?v.slice(0,2):v)).replace(/,/g,', ').slice(0,400)}catch(x){}return}
+    if(!A){st.skip++;st.skT.OLE2FRAME=(st.skT.OLE2FRAME||0)+1;if(!st.dgE)try{st.dgE='keys: '+Object.keys(e).filter(k=>!/^(xdata|handle|owner|layer|color|lineT|lineweight|isVisible|transparency)/.test(k)).join(', ')+' | values: '+JSON.stringify(Object.fromEntries(Object.entries(e).filter(([k,v])=>v&&typeof v=='object'&&!Array.isArray(v)||typeof v=='number'&&!/^(color|lineweight|lineTypeScale|transparency)/.test(k))),(k,v)=>Array.isArray(v)&&v.length>3?v.slice(0,3):v).replace(/,/g,', ').slice(0,500)}catch(x){}return}
     const dl=Object.assign({},e,{lineType:'DASHED'});line({x:A.x,y:A.y},{x:B.x,y:A.y},dl);line({x:B.x,y:A.y},{x:B.x,y:B.y},dl);line({x:B.x,y:B.y},{x:A.x,y:B.y},dl);line({x:A.x,y:B.y},{x:A.x,y:A.y},dl);
     const hh=Math.max(1,Math.min(Math.abs(B.y-A.y),Math.abs(B.x-A.x))/10);g(0,'TEXT');g(10,Math.min(A.x,B.x)+hh/2);g(20,Math.max(A.y,B.y)-hh*1.5);g(40,hh);g(1,'Embedded object (cannot be shown)');st.n++;st.ole=(st.ole||0)+1}
   else if(ty=='IMAGE'){const ps=P(e.position||e.insertionPoint),u=P(e.uPixel||e.uVector||{x:1,y:0}),v=P(e.vPixel||e.vVector||{x:0,y:1}),sz=e.imageSize||e.size||{x:1,y:1},q=X(ps,T),h=e.imageDefHandle!=null?e.imageDefHandle:(e.imageDef&&e.imageDef.handle!=null?e.imageDef.handle:e.imageDefId);
