@@ -74,6 +74,7 @@ input,select{font:inherit;color:var(--txt);background:var(--in);border:1px solid
 #hint{flex:none;max-width:64%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #ci{flex:1;min-width:70px;font-size:16px;padding:2px 6px;border-radius:2px;color:#fff;outline:0}
 #ci:focus{border-color:var(--blue)}
+#cprt{flex:none;height:14px;line-height:14px;text-align:center;font-size:9.5px;letter-spacing:.3px;color:var(--mut);background:var(--stat);border-top:1px solid var(--bd);white-space:nowrap;overflow:hidden;user-select:none;-webkit-user-select:none;pointer-events:none}
 #stat{flex:none;height:24px;display:flex;align-items:stretch;background:var(--stat);border-top:1px solid var(--bd);overflow-x:auto;scrollbar-width:none}
 .ml{flex:none;display:flex;align-items:center;padding:0 10px;font-size:10px;color:var(--txt);border-right:1px solid var(--line)}
 #coord{flex:none;display:flex;align-items:center;padding:0 8px;font:10px Consolas,"Segoe UI",monospace;color:var(--mut);min-width:150px}
@@ -286,6 +287,7 @@ body.fs #cmd,body.fs #stat{display:none}
 <div id="shm" hidden><button data-sh="ren">Rename</button><button data-sh="dup">Duplicate</button><button data-sh="del">Delete</button></div>
 <div id="stat"><span id="ttl">AUTOCAD 2D MOBILE<span id="dtab">Drawing1</span></span><span class="ml">Model</span><div id="coord">0.0000, 0.0000, 0.0000</div>
 <button class="st" data-f="grid" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 9.3h16M4 14.7h16M9.3 4v16M14.7 4v16"/></svg>GRID</button><button class="st" data-f="snap" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M6 4v7a6 6 0 0012 0V4h-4v7a2 2 0 01-4 0V4zM6 8h4M14 8h4"/></svg>SNAP</button><button class="st" data-f="dyn" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M3 5h18v11h-7l-2 3-2-3H3z"/><path d="M8 10.5h8"/></svg>DYN</button><button class="st" data-f="ortho" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M5 4v15h15M5 14h5v5"/></svg>ORTHO</button><button class="st" data-f="osnap" aria-pressed="true"><svg viewBox="0 0 24 24"><rect x="7.5" y="7.5" width="9" height="9"/><path d="M12 3v4.5M12 16.5V21M3 12h4.5M16.5 12H21"/></svg>OSNAP</button><button class="st" id="osa" aria-label="Object snap settings"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><button class="st" data-f="lwt" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 6h16" stroke-width="1"/><path d="M4 12h16" stroke-width="2.6"/><path d="M4 19h16" stroke-width="4.2"/></svg>LWT</button><button class="st" data-f="multi" aria-pressed="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"/><path d="M12 8v8M8 12h8"/></svg>MULTI</button><button class="st" id="inp2"></button></div>
+<div id="cprt">© 2026 byRomienaa · All rights reserved</div>
 <script>
 /* Standalone build: saving goes through the iOS share sheet (Save to Files -> iCloud Drive / OneDrive) or a normal download. */
 if(!window.claude){window.claude={use:async()=>({save:async({filename,data})=>{
