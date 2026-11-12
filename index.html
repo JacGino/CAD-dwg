@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>CAD 2D</title>
-<meta name="theme-color" content="#1d2126">
+<meta name="theme-color" content="#d7d8dc">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,6 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 
+<script>try{var _h=localStorage.getItem('drafter1bg')||'#d7d8dc',_d=document.documentElement;_d.style.background=_h;_d.style.setProperty('--cbg',_h)}catch(e){}</script>
 <style>
 :root{--bg:#212830;--grid:#272f39;--grid2:#313b47;--ink:#ffffff;--cbg:#212830;--cgrid:#272f39;--cgrid2:#313b47;--cink:#ffffff;--acc:#35a7ff;--panel:#2b3138;--rib:#39414b;--tab:#23282e;--stat:#1d2126;--line:#4b5561;--txt:#e8ecef;--mut:#a4aeb9;--blue:#1496e0;--in:#262b31;--press1:#3a424c;--press2:#4a5360;--vp:#c4ccd5;--bd:#000;--actbg:#17456a;--actst:#16384f;--sub:#242a31;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 :root.lite{--panel:#e9ecef;--rib:#dde2e8;--tab:#f1f3f5;--stat:#e3e7ec;--line:#b4bcc6;--txt:#1d2126;--mut:#5a6570;--acc:#0b6fc4;--in:#ffffff;--press1:#cdd3da;--press2:#c0c8d0;--vp:#4a5560;--bd:#b4bcc6;--actbg:#cfe5f8;--actst:#cfe5f8;--sub:#dfe4ea;color-scheme:light}
@@ -282,6 +283,7 @@ try{const d=JSON.parse(localStorage.getItem('drafter1os'));if(d){if(d.m)Object.a
 const saveOS=()=>{try{localStorage.setItem('drafter1os',JSON.stringify({m:OS,ap:OSAP,on:FL.osnap}))}catch(e){}};
 FL.snap=FL.ortho=FL.grid=FL.dyn=FL.lwt=FL.osnap=false;FL.multi=true;
 try{const q=JSON.parse(localStorage.getItem('drafter1fl'));if(q)for(const k in FL)if(typeof q[k]=='boolean')FL[k]=q[k]}catch(e){}
+try{if(!localStorage.getItem('drafter1gv')){FL.grid=true;localStorage.setItem('drafter1gv','1');localStorage.setItem('drafter1fl',JSON.stringify(FL))}else{if(!localStorage.getItem('drafter1fl'))FL.grid=true}}catch(e){FL.grid=true}
 document.querySelectorAll('[data-f]').forEach(b=>b.setAttribute('aria-pressed',!!FL[b.dataset.f]));
 function osOnArc(o,P){if(!o.g)return true;const g=o.g,an=Math.atan2(P.y-o.c.y,P.x-o.c.x),t=g.ccw?md(an-g.a1):md(g.a1-an),sw=g.ccw?md(g.a2-g.a1):md(g.a1-g.a2);return t<=sw+1e-6}
 function osSegInt(a,b,c,d,ext){const r={x:b.x-a.x,y:b.y-a.y},q={x:d.x-c.x,y:d.y-c.y},den=r.x*q.y-r.y*q.x;if(Math.abs(den)<1e-12)return null;const t=((c.x-a.x)*q.y-(c.y-a.y)*q.x)/den,u=((c.x-a.x)*r.y-(c.y-a.y)*r.x)/den;if(!ext&&(t<-1e-9||t>1+1e-9||u<-1e-9||u>1+1e-9))return null;return{x:a.x+t*r.x,y:a.y+t*r.y}}
@@ -1075,7 +1077,7 @@ const PNS=[['Auto (follow drawing)','auto'],['Dark','#23282e'],['Charcoal','#3a3
   const l=document.createElement('label');l.title='Custom panel colour';l.innerHTML='✚<input type="color" value="#23282e" aria-label="Custom panel colour">';l.onclick=e=>e.stopPropagation();l.querySelector('input').oninput=e=>pnApply(e.target.value);r.appendChild(l)})}
 $('#bgb').onclick=e=>{e.stopPropagation();$('#bgm').hidden=!$('#bgm').hidden};
 try{const q=localStorage.getItem('drafter1pn');if(q&&(q=='auto'||/^#[0-9a-f]{6}$/i.test(q)))PNL=q}catch(e){}
-try{const h=localStorage.getItem('drafter1bg');if(h)bgApply(h,1);else chromeApply()}catch(e){try{chromeApply()}catch(e2){}}
+try{const h=localStorage.getItem('drafter1bg');if(h)bgApply(h,1);else bgApply('#d7d8dc',1)}catch(e){try{chromeApply()}catch(e2){}}
 var UIS='auto',UZ=1;try{UIS=localStorage.getItem('drafter1uis')||'auto'}catch(e){}
 function uiZoom(){if(UIS!='auto')return +UIS||1;const m=Math.max(innerWidth,innerHeight);return m<1100?1:m<1500?1.15:m<2200?1.5:2}
 function uiApply(){const z=uiZoom();if(z==UZ&&document.documentElement.style.getPropertyValue('--ui'))return;UZ=z;document.documentElement.style.setProperty('--ui',z);document.querySelectorAll('#uim [data-z]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.z==UIS));try{size()}catch(e){}}
