@@ -1,0 +1,6 @@
+CAD 2D
+Copyright (c) 2026 byRomienaa. All rights reserved.
+
+This software and its source code are proprietary. You may not copy, modify,
+redistribute, sell, sublicense or reverse engineer it without written
+permission from byRomienaa.
