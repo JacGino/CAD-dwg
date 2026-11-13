@@ -1517,7 +1517,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)lastHide=Da
 /* ---- Full-screen 3D intro (ribbon, ball, discs, slabs) ---- */
 const INTRO=(()=>{const cv=document.getElementById('intro');if(!cv)return{skip(){},play(){},t:()=>0};const ctx=cv.getContext('2d');
 const DUR=6.1;let W=0,H=0,DP=1,raf=0,t0=0,live=false,onEnd=null,tnow=0;
-function size(){W=window.innerWidth;H=window.innerHeight;DP=Math.max(2,Math.min(3,window.devicePixelRatio||1));while(W*H*DP*DP>17e6&&DP>1)DP-=.25;cv.width=Math.round(W*DP);cv.height=Math.round(H*DP)}
+function size(){const bb=cv.getBoundingClientRect();W=Math.round(bb.width)||window.innerWidth;H=Math.round(bb.height)||window.innerHeight;DP=Math.max(2,Math.min(3,window.devicePixelRatio||1));while(W*H*DP*DP>17e6&&DP>1)DP-=.25;cv.width=Math.round(W*DP);cv.height=Math.round(H*DP)}
 const cl=(a,b,c)=>Math.max(b,Math.min(c,a)),lerp=(a,b,t)=>a+(b-a)*t,sm=(a,b,t)=>{t=cl((t-a)/(b-a),0,1);return t*t*(3-2*t)};
 const eo=t=>1-Math.pow(1-cl(t,0,1),3),eb=t=>{t=cl(t,0,1);const c=1.9;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)};
 const LV=(()=>{const l=[-.35,.85,.5],m=Math.hypot(...l);return l.map(x=>x/m)})();
